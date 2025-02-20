@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const pool = require('../models/db');
+const db = require("../models/db")
 
 // Middleware to authenticate the JWT token
 exports.authenticateJWT = async (req, res, next) => {
@@ -15,7 +15,7 @@ exports.authenticateJWT = async (req, res, next) => {
     req.user = decoded;
 
     // Check if token exists in the database
-    const [user] = await pool.query('SELECT * FROM users WHERE userid = ? AND token = ?', [decoded.userid, token]);
+    const [user] = await db.query('SELECT * FROM users WHERE userid = ? AND token = ?', [decoded.userid, token]);
     if (!user.length) {
       return res.status(401).json({ message: 'Invalid token' });
     }
