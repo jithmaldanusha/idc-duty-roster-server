@@ -1,27 +1,31 @@
 const jwt = require('jsonwebtoken');
-const db = require("../models/db")
+const db = require('../models/db'); // Assuming you have a DB connection set up
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Middleware to authenticate the JWT token
-exports.authenticateJWT = async (req, res, next) => {
-  const token = req.header('Authorization')?.split(' ')[1];
-
+const authenticate = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]; // Extract token from header
   if (!token) {
-    return res.status(401).json({ message: 'Access denied, no token provided.' });
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
   }
 
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-
-    // Check if token exists in the database
-    const [user] = await db.query('SELECT * FROM users WHERE userid = ? AND token = ?', [decoded.userid, token]);
-    if (!user.length) {
-      return res.status(401).json({ message: 'Invalid token' });
+    const decoded = jwt.verify(token, JWT_SECRET); // Verify token
+    req.user = decoded; // Attach user details to the request object
+    next(); // Proceed to the next middleware or controller
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      // Token has expired
+      try {
+        // Remove the expired token from the database
+        await db.query('UPDATE user SET sessionToken = NULL WHERE sessionToken = ?', [token]);
+      } catch (dbError) {
+        console.error('Error removing expired token from the database:', dbError);
+      }
+      return res.status(401).json({ error: 'Token expired. Please log in again.' });
     }
 
-    next();
-  } catch (error) {
-    res.status(400).json({ message: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token.' });
   }
 };
+
+module.exports = authenticate;

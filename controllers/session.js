@@ -113,9 +113,19 @@ exports.loginUser = async (req, res) => {
     // Update user's token and login time
     await db.query('UPDATE user SET sessiontoken = ?, lastlogin = NOW() WHERE userid = ?', [token, validUser.userid]);
 
+    // Return user details along with the token
     return res.status(200).json({
       message: 'Login successful',
-      token: token,
+      user: {
+        userid: validUser.userid,
+        username: validUser.username,
+        firstName: validUser.firstName,
+        lastName: validUser.lastName,
+        email: validUser.email,
+        role: validUser.role,
+        lastlogin: validUser.lastlogin, // Assuming it's available in the user object
+        sessiontoken: token, // You can choose to include the session token
+      }
     });
   } catch (error) {
     console.error(error);
@@ -138,4 +148,9 @@ exports.logoutUser = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
+};
+
+
+exports.validateToken = (req, res) => {
+  res.json({ valid: true, user: req.user });
 };

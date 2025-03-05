@@ -9,10 +9,12 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
 
-const authRoutes = require('../routes/sessionRoutes'); // Import routes
+const authRoutes = require('../routes/sessionRoutes'); 
+const settingsRoutes = require('../routes/settingsRoutes'); 
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Start the server
 const PORT = 5000;
